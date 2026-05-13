@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Kılıç Ustaları - Basit PvP</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #121212;
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        #setup { margin-top: 100px; }
+        input { padding: 10px; margin: 10px; border-radius: 5px; border: 1px solid #444; background: #222; color: white; }
+        button { padding: 10px 20px; border: none; border-radius: 5px; background: #27ae60; color: white; cursor: pointer; }
+        button:hover { background: #2ecc71; }
+        #gameArea { display: none; margin-top: 50px; }
+        canvas { background: #1a1a1a; border: 2px solid #333; }
+    </style>
+</head>
+<body>
+    <a href="index.html">
+        <button>anasayfa</button>
+    </a> <br>
+
+    <!-- GİRİŞ -->
+    <div id="setup">
+        <h1>KILIÇ USTALARI</h1>
+        <p>1. Oyuncu Adı:</p>
+        <input type="text" id="p1Input" placeholder="Oyuncu 1">
+        <p>2. Oyuncu Adı:</p>
+        <input type="text" id="p2Input" placeholder="Oyuncu 2">
+        <br>
+        <button id="startBtn">Başlat</button>
+    </div>
+
+    <!-- OYUN -->
+    <div id="gameArea">
+        <h2 id="msg">Oyun Başladı!</h2>
+        <p><span id="displayP1">P1</span> VS <span id="displayP2">P2</span></p>
+        <p>Kontroller:</p>
+        <p>P1: W/A/S/D Hareket, F Vur</p>
+        <p>P2: ↑/↓/←/→ Hareket, J Vur</p>
+        <canvas id="gameCanvas" width="600" height="300"></canvas>
+    </div>
+
+    <script>
+        const setupDiv = document.getElementById("setup");
+        const gameArea = document.getElementById("gameArea");
+        const startBtn = document.getElementById("startBtn");
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let keys = {};
+        let gameRunning = false;
+
+        let p1, p2;
+
+        startBtn.addEventListener("click", () => {
+            const name1 = document.getElementById("p1Input").value.trim() || "Oyuncu 1";
+            const name2 = document.getElementById("p2Input").value.trim() || "Oyuncu 2";
+
+            p1 = { x: 50, y: 150, w: 40, h: 60, color: "blue", name: name1, hp: 100 };
+            p2 = { x: 500, y: 150, w: 40, h: 60, color: "red", name: name2, hp: 100 };
+
+            document.getElementById("displayP1").innerText = name1;
+            document.getElementById("displayP2").innerText = name2;
+
+            setupDiv.style.display = "none";
+            gameArea.style.display = "block";
+            gameRunning = true;
+            loop();
+        });
+
+        // Tuşları takip et
+        window.addEventListener("keydown", (e) => keys[e.code] = true);
+        window.addEventListener("keyup", (e) => keys[e.code] = false);
+
+        function drawPlayers() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // P1
+            ctx.fillStyle = p1.color;
+            ctx.fillRect(p1.x, p1.y, p1.w, p1.h);
+
+            // P2
+            ctx.fillStyle = p2.color;
+            ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
+
+            // HP barları
+            ctx.fillStyle = "white";
+            ctx.fillText(p1.name + " HP: " + p1.hp, p1.x, p1.y - 10);
+            ctx.fillText(p2.name + " HP: " + p2.hp, p2.x, p2.y - 10);
+        }
+
+        function checkHit(attacker, defender) {
+            // Basit vuruş kontrolü
+            if (attacker.x + attacker.w >= defender.x &&
+                attacker.x <= defender.x + defender.w &&
+                attacker.y + attacker.h >= defender.y &&
+                attacker.y <= defender.y + defender.h) {
+                defender.hp -= 10;
+                if (defender.hp <= 0) {
+                    defender.hp = 0;
+                    document.getElementById("msg").innerText = attacker.name + " KAZANDI!";
+                    gameRunning = false;
+                }
+            }
+        }
+
+        function loop() {
+            if (!gameRunning) return;
+
+            // P1 hareket
+            if (keys["KeyW"] && p1.y > 0) p1.y -= 5;
+            if (keys["KeyS"] && p1.y < canvas.height - p1.h) p1.y += 5;
+            if (keys["KeyA"] && p1.x > 0) p1.x -= 5;
+            if (keys["KeyD"] && p1.x < canvas.width - p1.w) p1.x += 5;
+            if (keys["KeyF"]) checkHit(p1, p2);
+
+            // P2 hareket
+            if (keys["ArrowUp"] && p2.y > 0) p2.y -= 5;
+            if (keys["ArrowDown"] && p2.y < canvas.height - p2.h) p2.y += 5;
+            if (keys["ArrowLeft"] && p2.x > 0) p2.x -= 5;
+            if (keys["ArrowRight"] && p2.x < canvas.width - p2.w) p2.x += 5;
+            if (keys["KeyJ"]) checkHit(p2, p1);
+
+            drawPlayers();
+            requestAnimationFrame(loop);
+        }
+    </script>
+
+</body>
+</html>
